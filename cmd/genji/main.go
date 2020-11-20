@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 
 	"github.com/genjidb/genji/cmd/genji/shell"
 	"github.com/urfave/cli/v2"
@@ -85,6 +87,61 @@ $ curl https://api.github.com/repos/genjidb/genji/issues | genji insert --db my.
 				args := c.Args().Slice()
 
 				return runInsertCommand(c.Context, engine, dbPath, table, c.Bool("auto"), args)
+			},
+		},
+		{
+			Name:      "restore",
+			Usage:     "Restore a database or a table from a file created by genji dump",
+			UsageText: "genji restore [options] dumpFile dbPath",
+			Description: `
+The restore command can restore a database or a table from a valid SQL file.
+
+$ genji restore dump.sql my.db
+
+A specific table can be restored and a different engine can specified as well.
+
+$ genji restore -e badger -t foo dump.sql my.db
+			`,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "engine",
+					Aliases: []string{"e"},
+					Usage:   "name of the engine to use, options are 'bolt' or 'badger'",
+					Value:   "bolt",
+				},
+				&cli.StringFlag{
+					Name:    "table",
+					Aliases: []string{"t"},
+					Usage:   "name of the table to restore. Default to all tables",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				engine := c.String("engine")
+				table := c.String("table")
+				args := c.Args().Slice()
+
+				switch engine {
+				case "bolt", "badger":
+				default:
+					return fmt.Errorf("unsupported engine %q, only 'bolt' or 'badger' can be used", engine)
+				}
+
+				switch {
+				case len(args) != 2:
+					return fmt.Errorf("bad arguments: %v", c.Command.UsageText)
+				case !strings.HasSuffix(args[0], ".sql"):
+					return errors.New("first argument should be an SQL file")
+				case !strings.HasSuffix(args[1], ".db"):
+					return errors.New("second argument should be a database file")
+				}
+
+				file, err := os.Open(args[0])
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+
+				return runRestoreCommand(c.Context, file, engine, table, args[1])
 			},
 		},
 		{
