@@ -20,11 +20,18 @@ type User struct {
 }
 
 func Example() {
+	mem := memoryengine.NewEngine()
+	gdb2, err := genji.New(ctx, mem)
+	require.NoError(t, err)
+	drv := NewDriver(gdb2)
+	oc := drv.(interface {
+		OpenConnector(name string) (sdriver.Connector, error)
+	})
+	conn, err := oc.OpenConnector("")
+	require.NoError(t, err)
+
 	// Create a database instance, here we'll store everything in memory
-	db, err := genji.Open(":memory:")
-	if err != nil {
-		panic(err)
-	}
+	db := sql.OpenDB(conn)
 	defer db.Close()
 
 	// Create a table. Genji tables are schemaless by default, you don't need to specify a schema.

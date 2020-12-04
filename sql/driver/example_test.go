@@ -1,10 +1,14 @@
 package driver_test
 
 import (
+	"context"
 	"database/sql"
+	sdriver "database/sql/driver"
 	"fmt"
 	"log"
 
+	"github.com/genjidb/genji"
+	"github.com/genjidb/genji/engine/memoryengine"
 	"github.com/genjidb/genji/sql/driver"
 )
 
@@ -15,10 +19,23 @@ type User struct {
 }
 
 func Example() {
-	db, err := sql.Open("genji", ":memory:")
+	ctx := context.Background()
+	mem := memoryengine.NewEngine()
+	gdb2, err := genji.New(ctx, mem)
 	if err != nil {
 		log.Fatal(err)
 	}
+	drv := driver.NewDriver(gdb2)
+	oc := drv.(interface {
+		OpenConnector(name string) (sdriver.Connector, error)
+	})
+	conn, err := oc.OpenConnector("")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create a database instance, here we'll store everything in memory
+	db := sql.OpenDB(conn)
 	defer db.Close()
 
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS user")
