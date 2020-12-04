@@ -19,8 +19,6 @@ import (
 	"github.com/genjidb/genji"
 	"github.com/genjidb/genji/document"
 	"github.com/genjidb/genji/engine"
-	"github.com/genjidb/genji/engine/badgerengine"
-	"github.com/genjidb/genji/engine/boltengine"
 	"github.com/genjidb/genji/engine/memoryengine"
 	"github.com/genjidb/genji/sql/parser"
 	"go.uber.org/multierr"
@@ -550,10 +548,8 @@ func (sh *Shell) getDB(ctx context.Context) (*genji.DB, error) {
 	switch sh.opts.Engine {
 	case "memory":
 		ng = memoryengine.NewEngine()
-	case "bolt":
-		ng, err = boltengine.NewEngine(sh.opts.DBPath, 0660, nil)
-	case "badger":
-		ng, err = badgerengine.NewEngine(badger.DefaultOptions(sh.opts.DBPath).WithLogger(nil))
+	default:
+		err = errors.New("unknown engine")
 	}
 	if err != nil {
 		return nil, err

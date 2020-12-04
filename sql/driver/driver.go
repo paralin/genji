@@ -17,10 +17,6 @@ import (
 	"github.com/genjidb/genji/sql/query/expr"
 )
 
-func init() {
-	sql.Register("genji", sqlDriver{})
-}
-
 var (
 	_ driver.Driver        = (*sqlDriver)(nil)
 	_ driver.DriverContext = (*sqlDriver)(nil)
@@ -28,20 +24,24 @@ var (
 
 // sqlDriver is a driver.Driver that can open a new connection to a Genji database.
 // It is the driver used to register Genji against the database/sql package.
-type sqlDriver struct{}
-
-func (d sqlDriver) Open(name string) (driver.Conn, error) {
-	return nil, errors.New("requires go1.10 or greater")
+type sqlDriver struct {
+	db *genji.DB
 }
 
-func (d sqlDriver) OpenConnector(name string) (driver.Connector, error) {
-	db, err := genji.Open(name)
-	if err != nil {
-		return nil, err
-	}
+// NewDriver constructs a new sql driver with a db.
+//
+// Note: always connects to the given db.
+func NewDriver(db *genji.DB) driver.Driver {
+	return &sqlDriver{db: db}
+}
 
+func (d *sqlDriver) Open(name string) (driver.Conn, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (d *sqlDriver) OpenConnector(name string) (driver.Connector, error) {
 	c := &connector{
-		db:     db,
+		db:     d.db,
 		driver: d,
 	}
 	runtime.SetFinalizer(c, (*connector).Close)

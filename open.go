@@ -4,9 +4,9 @@ package genji
 
 import (
 	"context"
+	"errors"
 
 	"github.com/genjidb/genji/engine"
-	"github.com/genjidb/genji/engine/boltengine"
 	"github.com/genjidb/genji/engine/memoryengine"
 )
 
@@ -21,7 +21,7 @@ func Open(path string) (*DB, error) {
 	case ":memory:":
 		ng = memoryengine.NewEngine()
 	default:
-		ng, err = boltengine.NewEngine(path, 0660, nil)
+		err = errors.New("unknown engine")
 	}
 	if err != nil {
 		return nil, err
