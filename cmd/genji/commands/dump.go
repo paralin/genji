@@ -44,8 +44,8 @@ $ genji dump -f dump.sql my.db`,
 			&cli.StringFlag{
 				Name:    "engine",
 				Aliases: []string{"e"},
-				Usage:   "name of the engine to use, options are 'bolt' or 'badger'",
-				Value:   "bolt",
+				Usage:   "name of the engine to use",
+				Value:   "memory",
 			},
 			&cli.StringFlag{
 				Name:    "encryption-key",

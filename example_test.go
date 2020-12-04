@@ -1,10 +1,12 @@
 package genji_test
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/genjidb/genji"
 	"github.com/genjidb/genji/document"
+	"github.com/genjidb/genji/engine/memoryengine"
 )
 
 type User struct {
@@ -18,8 +20,9 @@ type User struct {
 }
 
 func Example() {
-	// Create a database instance, here we'll store everything in memory
-	db, err := genji.Open(":memory:")
+	ctx := context.Background()
+	mem := memoryengine.NewEngine()
+	db, err := genji.New(ctx, mem)
 	if err != nil {
 		panic(err)
 	}
