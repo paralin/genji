@@ -8,12 +8,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/dgraph-io/badger/v3"
 	"github.com/genjidb/genji"
 	"github.com/genjidb/genji/cmd/genji/dbutil"
 	"github.com/genjidb/genji/engine"
-	"github.com/genjidb/genji/engine/badgerengine"
-	"github.com/genjidb/genji/engine/boltengine"
 	"github.com/urfave/cli/v2"
 )
 
@@ -30,8 +27,8 @@ func NewRestoreCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:    "engine",
 				Aliases: []string{"e"},
-				Usage:   "name of the engine to use, options are 'bolt' or 'badger'",
-				Value:   "bolt",
+				Usage:   "name of the engine to use",
+				Value:   "memory",
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -70,12 +67,14 @@ func executeRestore(ctx context.Context, r io.Reader, e, dbPath string) error {
 	)
 
 	switch e {
-	case "bolt":
-		ng, err = boltengine.NewEngine(dbPath, 0660, nil)
-	case "badger":
-		ng, err = badgerengine.NewEngine(badger.DefaultOptions(dbPath).WithLogger(nil))
+	/*
+		case "bolt":
+			ng, err = boltengine.NewEngine(dbPath, 0660, nil)
+		case "badger":
+			ng, err = badgerengine.NewEngine(badger.DefaultOptions(dbPath).WithLogger(nil))
+	*/
 	default:
-		return fmt.Errorf(`engine should be "bolt" or "badger, got %q`, e)
+		return fmt.Errorf(`engine should be known, got %q`, e)
 	}
 	if err != nil {
 		return err
