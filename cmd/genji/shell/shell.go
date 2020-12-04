@@ -61,7 +61,6 @@ type Shell struct {
 // Options of the shell.
 type Options struct {
 	// Name of the engine to use when opening the database.
-	// Must be either "memory", "bolt" or "badger"
 	// If empty, "memory" will be used, unless DBPath is non empty.
 	// In that case "bolt" will be used.
 	Engine string
@@ -79,7 +78,7 @@ func (o *Options) validate() error {
 	}
 
 	switch o.Engine {
-	case "bolt", "badger", "memory":
+	case "memory":
 	default:
 		return stringutil.Errorf("unsupported engine %q", o.Engine)
 	}
@@ -117,10 +116,6 @@ func Run(ctx context.Context, opts *Options) error {
 	switch opts.Engine {
 	case "memory":
 		fmt.Println("Opened an in-memory database.")
-	case "bolt":
-		fmt.Printf("On-disk database using BoltDB engine at path %s.\n", opts.DBPath)
-	case "badger":
-		fmt.Printf("On-disk database using Badger engine at path %s.\n", opts.DBPath)
 	}
 	fmt.Println("Enter \".help\" for usage hints.")
 

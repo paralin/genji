@@ -29,7 +29,6 @@ func NewApp() *cli.App {
 		NewInsertCommand(),
 		NewVersionCommand(),
 		NewDumpCommand(),
-		NewRestoreCommand(),
 	}
 
 	// Root command

@@ -1,6 +1,8 @@
 package database
 
 import (
+	"sync"
+
 	"github.com/genjidb/genji/engine"
 	"github.com/genjidb/genji/stringutil"
 )
@@ -20,7 +22,8 @@ type Transaction struct {
 	tx       engine.Transaction
 	writable bool
 	// if set to true, this transaction is attached to the database
-	attached bool
+	attached  bool
+	closeOnce sync.Once
 
 	// these functions are run after a successful rollback or commit.
 	onRollbackHooks []func()
@@ -34,65 +37,70 @@ func (tx *Transaction) DB() *Database {
 
 // Rollback the transaction. Can be used safely after commit.
 func (tx *Transaction) Rollback() error {
-	err := tx.tx.Rollback()
-	if err != nil {
-		return err
-	}
+	var err error
+	tx.closeOnce.Do(func() {
+		defer func() {
+			if tx.writable {
+				tx.db.txmu.Unlock()
+			} else {
+				tx.db.txmu.RUnlock()
+			}
+		}()
 
-	defer func() {
-		if tx.writable {
-			tx.db.txmu.Unlock()
-		} else {
-			tx.db.txmu.RUnlock()
+		err = tx.tx.Rollback()
+		if err != nil {
+			return
 		}
-	}()
 
-	if tx.attached {
-		tx.db.attachedTxMu.Lock()
-		defer tx.db.attachedTxMu.Unlock()
+		if tx.attached {
+			tx.db.attachedTxMu.Lock()
+			defer tx.db.attachedTxMu.Unlock()
 
-		if tx.db.attachedTransaction != nil {
-			tx.db.attachedTransaction = nil
+			if tx.db.attachedTransaction != nil {
+				tx.db.attachedTransaction = nil
+			}
 		}
-	}
 
-	for i := len(tx.onRollbackHooks) - 1; i >= 0; i-- {
-		tx.onRollbackHooks[i]()
-	}
-
-	return nil
+		for i := len(tx.onRollbackHooks) - 1; i >= 0; i-- {
+			tx.onRollbackHooks[i]()
+		}
+	})
+	return err
 }
 
 // Commit the transaction. Calling this method on read-only transactions
 // will return an error.
 func (tx *Transaction) Commit() error {
-	err := tx.tx.Commit()
-	if err != nil {
-		return err
-	}
+	var err error
+	tx.closeOnce.Do(func() {
+		defer func() {
+			if tx.writable {
+				tx.db.txmu.Unlock()
+			} else {
+				tx.db.txmu.RUnlock()
+			}
+		}()
 
-	defer func() {
-		if tx.writable {
-			tx.db.txmu.Unlock()
-		} else {
-			tx.db.txmu.RUnlock()
+		err = tx.tx.Commit()
+		if err != nil {
+			return
 		}
-	}()
 
-	if tx.attached {
-		tx.db.attachedTxMu.Lock()
-		defer tx.db.attachedTxMu.Unlock()
+		if tx.attached {
+			tx.db.attachedTxMu.Lock()
+			defer tx.db.attachedTxMu.Unlock()
 
-		if tx.db.attachedTransaction != nil {
-			tx.db.attachedTransaction = nil
+			if tx.db.attachedTransaction != nil {
+				tx.db.attachedTransaction = nil
+			}
 		}
-	}
 
-	for i := len(tx.onCommitHooks) - 1; i >= 0; i-- {
-		tx.onCommitHooks[i]()
-	}
+		for i := len(tx.onCommitHooks) - 1; i >= 0; i-- {
+			tx.onCommitHooks[i]()
+		}
+	})
 
-	return nil
+	return err
 
 }
 
