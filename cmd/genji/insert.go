@@ -16,8 +16,6 @@ import (
 	"github.com/genjidb/genji"
 	"github.com/genjidb/genji/document"
 	"github.com/genjidb/genji/engine"
-	"github.com/genjidb/genji/engine/badgerengine"
-	"github.com/genjidb/genji/engine/boltengine"
 )
 
 func skipSpaces(r *bufio.Reader) (byte, error) {
@@ -121,18 +119,7 @@ func runInsertCommand(ctx context.Context, e, dbPath, table string, auto bool, a
 		createTable = true
 	}
 
-	switch e {
-	case "bolt":
-		if dbPath == "" && auto {
-			dbPath = generatedName + ".db"
-		}
-		ng, err = boltengine.NewEngine(dbPath, 0660, nil)
-	case "badger":
-		if dbPath == "" && auto {
-			dbPath = generatedName
-		}
-		ng, err = badgerengine.NewEngine(badger.DefaultOptions(dbPath).WithLogger(nil))
-	}
+	err = errors.New("no engine configured")
 	if err != nil {
 		return err
 	}

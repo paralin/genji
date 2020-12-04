@@ -15,8 +15,6 @@ import (
 	"github.com/genjidb/genji/database"
 	"github.com/genjidb/genji/document"
 	"github.com/genjidb/genji/engine"
-	"github.com/genjidb/genji/engine/badgerengine"
-	"github.com/genjidb/genji/engine/boltengine"
 )
 
 var commands = []struct {
@@ -397,16 +395,6 @@ func RunSaveCmd(ctx context.Context, db *genji.DB, engineName string, dbPath str
 	var otherNg engine.Engine
 
 	switch engineName {
-	case "bolt":
-		otherNg, err = boltengine.NewEngine(dbPath, 0660, nil)
-		if err != nil {
-			return err
-		}
-	case "badger":
-		otherNg, err = badgerengine.NewEngine(badger.DefaultOptions(dbPath).WithLogger(nil))
-		if err != nil {
-			return err
-		}
 	default:
 		return fmt.Errorf("Can't use unknown engine %s", engineName)
 	}

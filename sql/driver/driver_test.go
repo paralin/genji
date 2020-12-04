@@ -3,9 +3,12 @@ package driver
 import (
 	"context"
 	"database/sql"
+	sdriver "database/sql/driver"
 	"testing"
 
+	"github.com/genjidb/genji"
 	"github.com/genjidb/genji/engine"
+	"github.com/genjidb/genji/engine/memoryengine"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,8 +21,18 @@ type doctest struct {
 type foo struct{ Foo string }
 
 func TestDriver(t *testing.T) {
-	db, err := sql.Open("genji", ":memory:")
+	ctx := context.Background()
+	mem := memoryengine.NewEngine()
+	gdb2, err := genji.New(ctx, mem)
 	require.NoError(t, err)
+	drv := NewDriver(gdb2)
+	oc := drv.(interface {
+		OpenConnector(name string) (sdriver.Connector, error)
+	})
+	conn, err := oc.OpenConnector("")
+	require.NoError(t, err)
+
+	db := sql.OpenDB(conn)
 	defer db.Close()
 
 	res, err := db.Exec("CREATE TABLE test")
