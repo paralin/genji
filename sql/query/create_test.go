@@ -28,6 +28,7 @@ func TestCreateTable(t *testing.T) {
 		{"If not exists, twice", "CREATE TABLE IF NOT EXISTS test;CREATE TABLE IF NOT EXISTS test", false},
 		{"With primary key", "CREATE TABLE test(foo TEXT PRIMARY KEY)", false},
 		{"With field constraints", "CREATE TABLE test(foo.a[1][2] TEXT primary key, bar[4][0].bat INTEGER not null, baz not null)", false},
+		{"With primary key after", "CREATE TABLE test(a TEXT, PRIMARY KEY(`id`));", false},
 		{"With no constraints", "CREATE TABLE test(a, b)", false},
 		{"With coherent constraint(common)", "CREATE TABLE test(a DOCUMENT, a.b ARRAY, a.b[0] TEXT);", false},
 		{"With coherent constraint(any)", "CREATE TABLE test(a, a.b[0] TEXT);", false},
